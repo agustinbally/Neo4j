@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Neo4jClient;
 
 namespace Neo4jPOC
@@ -8,59 +10,38 @@ namespace Neo4jPOC
     {
         static void Main()
         {
-            var user = new User { Id = 1, Age = 33, Name = "Agustín", Email = "asd@pp.com" };
+            var user = new User { Id = 1, Age = 10, Name = "Agustín", Email = "asd@pp.com" };
 
             var client = CreateGraphClient();
             
-            DeleteUser(client, user.Id);            
-            CreateUser(client, user);
-            var allUsers = GetAllUsers(client);
+            BorrarNodo(client, user);
+            CrearNodo(client, user);
 
-            foreach (var u in allUsers)
+            var usuarios = ObtenerTodos<User>(client);
+
+            foreach (var u in usuarios)
             {
                 Console.WriteLine("{0}:{1}:{2}:{3}", u.Id, u.Name, u.Age, u.Email);
             }
 
+            var usuario = ObtenerNodo<User>(client, user.Id);
+            Console.WriteLine("{0}:{1}:{2}:{3}", usuario.Id, usuario.Name, usuario.Age, usuario.Email);
+
             Console.ReadKey();
-        }
+        }        
 
-        private static void DeleteUser(ICypherGraphClient client, long id)
-        {
-            client.Cypher
-                .Match("(user:User)")
-                .Where((User user) => user.Id == id)
-                .Delete("user")
-                .ExecuteWithoutResults();
-        }
+        
 
-        private static GraphClient CreateGraphClient()
-        {
-            var client = new GraphClient(new Uri("http://localhost:7474/db/data"));
-            client.Connect();
-
-            return client;
-        }
-
-        private static void CreateUser(ICypherGraphClient cypherGraphClient, User user)
-        {
-            cypherGraphClient.Cypher
-                .Create("(user:User {newUser})")
-                .WithParam("newUser", user)
-                .ExecuteWithoutResults();
-        }
-
-        private static IEnumerable<User> GetAllUsers(ICypherGraphClient cypherGraphClient)
-        {
-            return cypherGraphClient.Cypher
-                .Match("(user:User)")
-                .Return(user => user.As<User>())
-                .Results;
-        }
+        
     }
 
-    public class User
+    public class EntidadConId
     {
         public long Id { get; set; }
+    }
+
+    public class User : EntidadConId
+    {
         public string Name { get; set; }
         public int Age { get; set; }
         public string Email { get; set; }
